@@ -88,6 +88,15 @@ public class ProductController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping(value = "/{id}")
+    public Product updateStatus(
+            @PathVariable UUID id,
+            @RequestBody boolean status
+    ) throws IOException {
+        return productService.editStatus(id, status);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public void delete(@PathVariable UUID id) {
         productService.deleteById(id);

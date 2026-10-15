@@ -1,0 +1,4 @@
+ALTER TABLE users
+    ADD COLUMN address VARCHAR(255),
+    ADD COLUMN num VARCHAR(11),
+    ADD COLUMN neighborhood VARCHAR(100);

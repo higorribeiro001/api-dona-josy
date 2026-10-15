@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import org.springframework.web.server.ResponseStatusException;
@@ -26,13 +27,23 @@ public class CartController {
     @GetMapping
     public Page<Cart> findAll(
             @RequestParam(required = false) String name,
-            Pageable pageable
+            @RequestParam(required = false) StatusCart statusCart,
+            Pageable pageable,
+            Authentication authentication
     ) {
+        if (statusCart != null && name != null) {
+            return cartService.getCartsByNameAndStatusCart(name, statusCart, pageable);
+        }
+
+        if (statusCart != null) {
+            return cartService.getCartsByStatusCart(statusCart, pageable, authentication);
+        }
+
         if (name != null) {
             return cartService.getCartsByName(name, pageable);
         }
 
-        return cartService.getCarts(pageable);
+        return cartService.getCarts(pageable, authentication);
     }
 
     @GetMapping("/{id}")

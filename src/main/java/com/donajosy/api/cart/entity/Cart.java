@@ -2,19 +2,16 @@ package com.donajosy.api.cart.entity;
 
 import com.donajosy.api.product.entity.Product;
 import com.donajosy.api.auth.entity.User;
-import com.donajosy.api.product.entity.ProductCategory;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "cars")
 public class Cart {
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;

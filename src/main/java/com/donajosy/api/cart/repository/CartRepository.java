@@ -13,5 +13,13 @@ public interface CartRepository extends JpaRepository<Cart, UUID> {
     Page<Cart> findByProduct_NameContainingIgnoreCase(String name, Pageable pageable);
 
     List<Cart> findAllByUser_EmailAndStatusCart(String email, StatusCart statusCart);
+
+    Page<Cart> findAllByUser_IdAndStatusCart(UUID id, StatusCart statusCart, Pageable pageable);
+
+    Page<Cart> findAllByStatusCart(StatusCart statusCart, Pageable pageable);
+
+    Page<Cart> findAllByProduct_NameContainingIgnoreCaseAndStatusCart(String name, StatusCart statusCart, Pageable pageable);
+
+    Page<Cart> findByUser_Id(UUID userId, Pageable pageable);
 }
 

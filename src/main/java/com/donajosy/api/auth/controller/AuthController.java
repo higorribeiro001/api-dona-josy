@@ -2,12 +2,14 @@ package com.donajosy.api.auth.controller;
 
 import com.donajosy.api.auth.dto.LoginRequest;
 import com.donajosy.api.auth.dto.LoginResponse;
-import com.donajosy.api.auth.dto.RegisterRequest;
-import com.donajosy.api.auth.dto.RegisterResponse;
+import com.donajosy.api.auth.dto.UserRequest;
+import com.donajosy.api.auth.dto.UserResponse;
 import com.donajosy.api.auth.service.AuthService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/auth")
@@ -47,11 +49,11 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<RegisterResponse> register(
-            @RequestBody RegisterRequest request
+    public ResponseEntity<UserResponse> register(
+            @RequestBody UserRequest request
     ) {
 
-        RegisterResponse response =
+        UserResponse response =
                 authService.register(request);
 
         return ResponseEntity
@@ -60,15 +62,41 @@ public class AuthController {
     }
 
     @PostMapping("/register/admin")
-    public ResponseEntity<RegisterResponse> registerAdmin(
-            @RequestBody RegisterRequest request
+    public ResponseEntity<UserResponse> registerAdmin(
+            @RequestBody UserRequest request
     ) {
 
-        RegisterResponse response =
+        UserResponse response =
                 authService.registerAdmin(request);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
+                .body(response);
+    }
+
+    @PutMapping("/user/{id}")
+    public ResponseEntity<UserResponse> updateUser(
+            @PathVariable UUID id, @RequestBody UserRequest request
+    ) {
+
+        UserResponse response =
+                authService.update(id, request);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(response);
+    }
+
+    @GetMapping("/user/{id}")
+    public ResponseEntity<UserResponse> getUser(
+            @PathVariable UUID id
+    ) {
+
+        UserResponse response =
+                authService.profile(id);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
                 .body(response);
     }
 }

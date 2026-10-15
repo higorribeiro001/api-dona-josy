@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.stereotype.Service;
 
@@ -25,9 +27,49 @@ public class CartService {
     @Autowired
     private ProductRepository productRepository;
 
-    public Page<Cart> getCarts(Pageable pageable) { return cartRepository.findAll(pageable); }
+    public Page<Cart> getCarts(Pageable pageable, Authentication authentication) {
+        boolean isAdmin = authentication.getAuthorities()
+                .stream()
+                .anyMatch(authority ->
+                        authority.getAuthority().equals("ROLE_ADMIN")
+                );
+
+        if (isAdmin) {
+            return cartRepository.findAll(pageable);
+        }
+
+        User user = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() ->
+                        new UsernameNotFoundException("User not found")
+                );
+
+        return cartRepository.findByUser_Id(user.getId(), pageable);
+    }
 
     public Page<Cart> getCartsByName(String name, Pageable pageable) { return cartRepository.findByProduct_NameContainingIgnoreCase(name, pageable); }
+
+    public Page<Cart> getCartsByStatusCart(StatusCart statusCart, Pageable pageable, Authentication authentication) {
+        boolean isAdmin = authentication.getAuthorities()
+                .stream()
+                .anyMatch(authority ->
+                        authority.getAuthority().equals("ROLE_ADMIN")
+                );
+
+        if (isAdmin) {
+            return cartRepository.findAllByStatusCart(statusCart, pageable);
+        }
+
+        User user = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() ->
+                        new UsernameNotFoundException("User not found")
+                );
+
+        return cartRepository.findAllByUser_IdAndStatusCart(user.getId(), statusCart, pageable);
+    }
+
+    public Page<Cart> getCartsByNameAndStatusCart(String name, StatusCart statusCart, Pageable pageable) {
+        return cartRepository.findAllByProduct_NameContainingIgnoreCaseAndStatusCart(name, statusCart, pageable);
+    }
 
     public Cart getCartById(UUID id) {
         return cartRepository.findById(id)

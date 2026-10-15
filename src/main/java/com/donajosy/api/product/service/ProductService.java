@@ -81,6 +81,17 @@ public class ProductService {
         }
     }
 
+    public Product editStatus(UUID id, boolean status) {
+        Product product = productRepository.getReferenceById(id);
+
+        if (productRepository.existsById(id)) {
+            product.setActive(status);
+            return productRepository.save(product);
+        } else {
+            throw new RuntimeException("Product with id: " + id + " not found");
+        }
+    }
+
     public String saveImage(MultipartFile image) throws IOException {
         Path uploadPath = Paths.get("uploads/products/");
 

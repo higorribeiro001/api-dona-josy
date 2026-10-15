@@ -1,11 +1,11 @@
 package com.donajosy.api.auth.entity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity
 @Table(name = "users")
 public class User {
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -19,6 +19,16 @@ public class User {
     @Column(nullable = false)
     private String phone;
 
+    @Column(nullable = true)
+    private String address;
+
+    @Column(nullable = true)
+    private String num;
+
+    @Column(nullable = true)
+    private String neighborhood;
+
+    @JsonIgnore
     @Column(nullable = false)
     private String password;
 
@@ -54,6 +64,30 @@ public class User {
     public String getPhone() { return phone; }
 
     public void setPhone(String phone) { this.phone = phone; }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getNum() {
+        return num;
+    }
+
+    public void setNum(String num) {
+        this.num = num;
+    }
+
+    public String getNeighborhood() {
+        return neighborhood;
+    }
+
+    public void setNeighborhood(String neighborhood) {
+        this.neighborhood = neighborhood;
+    }
 
     public String getPassword() {
         return password;

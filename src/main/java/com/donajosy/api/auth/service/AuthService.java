@@ -1,7 +1,7 @@
 package com.donajosy.api.auth.service;
 
-import com.donajosy.api.auth.dto.RegisterRequest;
-import com.donajosy.api.auth.dto.RegisterResponse;
+import com.donajosy.api.auth.dto.UserRequest;
+import com.donajosy.api.auth.dto.UserResponse;
 import com.donajosy.api.auth.entity.Role;
 import com.donajosy.api.auth.entity.User;
 import com.donajosy.api.auth.repository.UserRepository;
@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.UUID;
 
 @Service
 public class AuthService {
@@ -76,7 +77,7 @@ public class AuthService {
         revokedTokenRepository.save(revokedToken);
     }
 
-    public RegisterResponse register(RegisterRequest request) {
+    public UserResponse register(UserRequest request) {
 
         if (userRepository.existsByEmail(request.email())) {
             throw new RuntimeException("Email already registered");
@@ -89,6 +90,12 @@ public class AuthService {
         user.setEmail(request.email());
 
         user.setPhone(request.phone());
+
+        user.setAddress(request.address());
+
+        user.setNum(request.num());
+
+        user.setNeighborhood(request.neighborhood());
 
         user.setPassword(
                 passwordEncoder.encode(request.password())
@@ -99,17 +106,63 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
-        return new RegisterResponse(
+        return new UserResponse(
                 savedUser.getId(),
                 savedUser.getEmail(),
                 savedUser.getName(),
                 savedUser.getPhone(),
-                savedUser.getRole()
+                savedUser.getRole(),
+                user.getAddress(),
+                user.getNum(),
+                user.getNeighborhood()
         );
     }
 
-    public RegisterResponse registerAdmin(RegisterRequest request) {
+    public UserResponse update(UUID id, UserRequest request) {
+        User user = userRepository.getReferenceById(id);
 
+        user.setName(request.name());
+
+        user.setEmail(request.email());
+
+        user.setPhone(request.phone());
+
+        user.setAddress(request.address());
+
+        user.setNum(request.num());
+
+        user.setNeighborhood(request.neighborhood());
+
+        User savedUser = userRepository.save(user);
+
+        return new UserResponse(
+                savedUser.getId(),
+                savedUser.getEmail(),
+                savedUser.getName(),
+                savedUser.getPhone(),
+                savedUser.getRole(),
+                user.getAddress(),
+                user.getNum(),
+                user.getNeighborhood()
+        );
+    }
+
+    public UserResponse profile(UUID id) {
+        User user = userRepository.getReferenceById(id);
+
+        return new UserResponse(
+                user.getId(),
+                user.getEmail(),
+                user.getName(),
+                user.getPhone(),
+                user.getRole(),
+                user.getAddress(),
+                user.getNum(),
+                user.getNeighborhood()
+        );
+    }
+
+    public UserResponse registerAdmin(UserRequest request) {
         if (userRepository.existsByEmail(request.email())) {
             throw new RuntimeException("Email already registered");
         }
@@ -122,6 +175,12 @@ public class AuthService {
 
         user.setPhone(request.phone());
 
+        user.setAddress(request.address());
+
+        user.setNum(request.num());
+
+        user.setNeighborhood(request.neighborhood());
+
         user.setPassword(
                 passwordEncoder.encode(request.password())
         );
@@ -130,12 +189,15 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
-        return new RegisterResponse(
+        return new UserResponse(
                 savedUser.getId(),
                 savedUser.getEmail(),
                 savedUser.getName(),
                 savedUser.getPhone(),
-                savedUser.getRole()
+                savedUser.getRole(),
+                user.getAddress(),
+                user.getNum(),
+                user.getNeighborhood()
         );
     }
 }
