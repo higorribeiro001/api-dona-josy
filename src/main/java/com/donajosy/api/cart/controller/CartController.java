@@ -53,8 +53,8 @@ public class CartController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Cart save(@Valid @RequestBody CreateCartRequest request) {
-        return cartService.create(request.userId(), request.productId(), StatusCart.ANDAMENTO);
+    public Cart save(@Valid @RequestBody CreateCartRequest request, Authentication authentication) {
+        return cartService.create(request.productId(), StatusCart.ANDAMENTO, authentication);
     }
 
     @PutMapping("/{id}")
@@ -68,7 +68,7 @@ public class CartController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found");
         }
 
-        return cartService.create(request.userId(), request.productId(), request.statusCart());
+        return cartService.update(id, request.statusCart());
     }
 
     @DeleteMapping("/{id}")

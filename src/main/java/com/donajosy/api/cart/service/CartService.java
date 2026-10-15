@@ -76,8 +76,8 @@ public class CartService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found"));
     }
 
-    public Cart create(UUID userId, UUID productId, StatusCart statusCart) {
-        User user = userRepository.findById(userId)
+    public Cart create(UUID productId, StatusCart statusCart, Authentication authentication) {
+        User user = userRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
@@ -91,13 +91,18 @@ public class CartService {
         cartRepository.deleteById(id);
     }
 
-    public Cart update(UUID id, Cart cart) {
-        if (cartRepository.existsById(id)) {
-            cart.setId(id);
-            return cartRepository.save(cart);
-        } else {
-            throw new RuntimeException("Cart with id: " + id + " not found");
-        }
+    public Cart update(UUID id, StatusCart statusCart) {
+        Cart cart = cartRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Cart with id: " + id + " not found"
+                        )
+                );
+
+        cart.setStatusCart(statusCart);
+
+        return cartRepository.save(cart);
     }
 }
 

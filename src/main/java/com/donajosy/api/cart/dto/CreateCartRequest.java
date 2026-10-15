@@ -7,8 +7,6 @@ import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
 public record CreateCartRequest(
-        @JsonProperty("user_id")
-        @NotNull UUID userId,
         @JsonProperty("product_id")
         @NotNull UUID productId,
         @JsonProperty("status_cart")
