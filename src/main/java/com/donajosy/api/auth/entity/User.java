@@ -89,6 +89,7 @@ public class User {
         this.neighborhood = neighborhood;
     }
 
+    @JsonIgnore
     public String getPassword() {
         return password;
     }
