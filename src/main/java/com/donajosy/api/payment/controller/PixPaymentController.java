@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/payments")
@@ -20,6 +21,7 @@ public class PixPaymentController {
     }
 
     @PostMapping("/pix")
+    @PreAuthorize("hasRole('USER')")
     @ResponseStatus(HttpStatus.CREATED)
     public PixChargeResponse generate(@AuthenticationPrincipal UserDetails userDetails) {
         return pixPaymentService.generateForUser(userDetails.getUsername());

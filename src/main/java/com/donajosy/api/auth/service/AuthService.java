@@ -162,6 +162,15 @@ public class AuthService {
         );
     }
 
+    public UserResponse profile(String email) {
+        User user = userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow();
+        return new UserResponse(
+                user.getId(), user.getEmail(), user.getName(), user.getPhone(),
+                user.getRole(), user.getAddress(), user.getNum(), user.getNeighborhood()
+        );
+    }
+
     public UserResponse registerAdmin(UserRequest request) {
         if (userRepository.existsByEmail(request.email())) {
             throw new RuntimeException("Email already registered");

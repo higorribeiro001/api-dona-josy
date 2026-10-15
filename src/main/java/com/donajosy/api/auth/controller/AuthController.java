@@ -8,6 +8,7 @@ import com.donajosy.api.auth.service.AuthService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
 
 import java.util.UUID;
 
@@ -98,5 +99,10 @@ public class AuthController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(response);
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<UserResponse> profile(Authentication authentication) {
+        return ResponseEntity.ok(authService.profile(authentication.getName()));
     }
 }

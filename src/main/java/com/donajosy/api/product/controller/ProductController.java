@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.UUID;
+import org.springframework.security.core.Authentication;
 
 @RestController
 @RequestMapping("/products")
@@ -28,21 +29,12 @@ public class ProductController {
     public Page<Product> findAll(
             @RequestParam(required = false) ProductCategory category,
             @RequestParam(required = false) String name,
-            Pageable pageable
+            Pageable pageable,
+            Authentication authentication
     ) {
-        if (category != null && name != null) {
-            return productService.getProductsByCategoryAndName(category, name, pageable);
-        }
-
-        if (category != null) {
-            return productService.getProductsByCategory(category, pageable);
-        }
-
-        if (name != null) {
-            return productService.getProductsByName(name, pageable);
-        }
-
-        return productService.getProducts(pageable);
+        boolean admin = authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+        return productService.search(category, name, !admin, pageable);
     }
 
     @GetMapping("/{id}")

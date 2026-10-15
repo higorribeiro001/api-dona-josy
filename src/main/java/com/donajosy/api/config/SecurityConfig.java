@@ -57,7 +57,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/auth/login", "/auth/register", "/auth/register/admin", "/uploads/**").permitAll()
+                        .requestMatchers("/auth/login", "/auth/register", "/uploads/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/register/admin").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/products/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )

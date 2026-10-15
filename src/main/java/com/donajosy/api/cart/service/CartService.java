@@ -10,11 +10,18 @@ import com.donajosy.api.cart.entity.StatusCart;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import com.donajosy.api.product.entity.ProductCategory;
+import java.math.BigDecimal;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import com.donajosy.api.notification.entity.UserNotification;
+import com.donajosy.api.notification.repository.UserNotificationRepository;
 
 import java.util.UUID;
 
@@ -26,24 +33,43 @@ public class CartService {
     private UserRepository userRepository;
     @Autowired
     private ProductRepository productRepository;
+    @Autowired
+    private UserNotificationRepository notificationRepository;
 
     public Page<Cart> getCarts(Pageable pageable, Authentication authentication) {
-        boolean isAdmin = authentication.getAuthorities()
-                .stream()
-                .anyMatch(authority ->
-                        authority.getAuthority().equals("ROLE_ADMIN")
-                );
+        return search(null, null, null, pageable, authentication);
+    }
 
-        if (isAdmin) {
-            return cartRepository.findAll(pageable);
+    public Page<Cart> search(String name, ProductCategory category, StatusCart statusCart,
+                             Pageable pageable, Authentication authentication) {
+        boolean isAdmin = isAdmin(authentication);
+        UUID userId = null;
+        if (!isAdmin) {
+            User user = userRepository.findByEmail(authentication.getName())
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+            userId = user.getId();
+            // Name/category filters are reserved for administrators.
+            name = null;
+            category = null;
         }
+        String query = name == null || name.isBlank() ? null : name.trim();
+        Pageable oldestFirst = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                Sort.by(Sort.Direction.ASC, "createdAt").and(Sort.by(Sort.Direction.ASC, "id")));
+        return cartRepository.search(userId, query, category, statusCart, oldestFirst);
+    }
 
+    public BigDecimal totalForUser(StatusCart statusCart, Authentication authentication) {
+        if (isAdmin(authentication)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only users can request their cart total");
+        }
         User user = userRepository.findByEmail(authentication.getName())
-                .orElseThrow(() ->
-                        new UsernameNotFoundException("User not found")
-                );
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        return cartRepository.sumForUser(user.getId(), statusCart);
+    }
 
-        return cartRepository.findByUser_Id(user.getId(), pageable);
+    private boolean isAdmin(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
     }
 
     public Page<Cart> getCartsByName(String name, Pageable pageable) { return cartRepository.findByProduct_NameContainingIgnoreCase(name, pageable); }
@@ -71,9 +97,13 @@ public class CartService {
         return cartRepository.findAllByProduct_NameContainingIgnoreCaseAndStatusCart(name, statusCart, pageable);
     }
 
-    public Cart getCartById(UUID id) {
-        return cartRepository.findById(id)
+    public Cart getCartById(UUID id, Authentication authentication) {
+        Cart cart = cartRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found"));
+        if (!isAdmin(authentication) && !cart.getUser().getEmail().equalsIgnoreCase(authentication.getName())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found");
+        }
+        return cart;
     }
 
     public Cart create(UUID productId, StatusCart statusCart, Authentication authentication) {
@@ -81,17 +111,20 @@ public class CartService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
+        if (!product.getIsActive()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product is inactive");
+        }
         Cart cart = new Cart(user, product, statusCart);
         return cartRepository.save(cart);
     }
 
     public Cart save(Cart cart) { return cartRepository.save(cart); }
 
-    public void deleteById(UUID id) {
-        cartRepository.deleteById(id);
-    }
-
-    public Cart update(UUID id, StatusCart statusCart) {
+    @Transactional
+    public Cart update(UUID id, StatusCart statusCart, Authentication authentication) {
+        if (statusCart == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cart status is required");
+        }
         Cart cart = cartRepository.findById(id)
                 .orElseThrow(() ->
                         new ResponseStatusException(
@@ -100,9 +133,27 @@ public class CartService {
                         )
                 );
 
-        cart.setStatusCart(statusCart);
+        boolean admin = isAdmin(authentication);
+        if (!admin) {
+            if (!cart.getUser().getEmail().equalsIgnoreCase(authentication.getName())) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found");
+            }
+            if (statusCart != StatusCart.CANCELADO) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Users can only cancel their own cart items");
+            }
+        }
 
-        return cartRepository.save(cart);
+        StatusCart previousStatus = cart.getStatusCart();
+        cart.setStatusCart(statusCart);
+        Cart updatedCart = cartRepository.save(cart);
+        if (!statusCart.equals(previousStatus)) {
+            String productName = cart.getProduct() == null ? "seu item" : cart.getProduct().getName();
+            notificationRepository.save(new UserNotification(
+                    cart.getUser(),
+                    "O status de " + productName + " foi atualizado para " + statusCart.name() + "."
+            ));
+        }
+        return updatedCart;
     }
 }
 

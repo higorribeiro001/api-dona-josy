@@ -26,6 +26,20 @@ public class ProductService {
         return productRepository.findAll(pageable);
     }
 
+    public Page<Product> search(ProductCategory category, String name, boolean activeOnly, Pageable pageable) {
+        String query = name == null || name.isBlank() ? null : name.trim();
+        if (activeOnly) {
+            if (category != null && query != null) return productRepository.findByIsActiveTrueAndCategoryAndNameContainingIgnoreCase(category, query, pageable);
+            if (category != null) return productRepository.findByIsActiveTrueAndCategory(category, pageable);
+            if (query != null) return productRepository.findByIsActiveTrueAndNameContainingIgnoreCase(query, pageable);
+            return productRepository.findByIsActiveTrue(pageable);
+        }
+        if (category != null && query != null) return productRepository.findByCategoryAndNameContainingIgnoreCase(category, query, pageable);
+        if (category != null) return productRepository.findByCategory(category, pageable);
+        if (query != null) return productRepository.findByNameContainingIgnoreCase(query, pageable);
+        return productRepository.findAll(pageable);
+    }
+
     public Product getProductById(UUID id) {
         return productRepository.getReferenceById(id);
     }

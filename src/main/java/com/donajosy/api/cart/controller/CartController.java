@@ -6,6 +6,8 @@ import com.donajosy.api.cart.dto.CreateCartRequest;
 import com.donajosy.api.cart.entity.StatusCart;
 import com.donajosy.api.cart.service.CartService;
 import com.donajosy.api.product.entity.Product;
+import com.donajosy.api.product.entity.ProductCategory;
+import java.math.BigDecimal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -28,27 +31,22 @@ public class CartController {
     public Page<Cart> findAll(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) StatusCart statusCart,
+            @RequestParam(required = false) ProductCategory category,
             Pageable pageable,
             Authentication authentication
     ) {
-        if (statusCart != null && name != null) {
-            return cartService.getCartsByNameAndStatusCart(name, statusCart, pageable);
-        }
+        return cartService.search(name, category, statusCart, pageable, authentication);
+    }
 
-        if (statusCart != null) {
-            return cartService.getCartsByStatusCart(statusCart, pageable, authentication);
-        }
-
-        if (name != null) {
-            return cartService.getCartsByName(name, pageable);
-        }
-
-        return cartService.getCarts(pageable, authentication);
+    @GetMapping("/total")
+    public BigDecimal total(@RequestParam(required = false) StatusCart statusCart,
+                            Authentication authentication) {
+        return cartService.totalForUser(statusCart, authentication);
     }
 
     @GetMapping("/{id}")
-    public Cart findById(@PathVariable UUID id) {
-        return cartService.getCartById(id);
+    public Cart findById(@PathVariable UUID id, Authentication authentication) {
+        return cartService.getCartById(id, authentication);
     }
 
     @PostMapping
@@ -60,21 +58,10 @@ public class CartController {
     @PutMapping("/{id}")
     public Cart update(
             @PathVariable UUID id,
-            @Valid @RequestBody CreateCartRequest request
+            @Valid @RequestBody CreateCartRequest request,
+            Authentication authentication
     ) throws IOException {
-        Cart cart = cartService.getCartById(id);
-
-        if  (cart == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found");
-        }
-
-        return cartService.update(id, request.statusCart());
-    }
-
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable UUID id) {
-        cartService.deleteById(id);
+        return cartService.update(id, request.statusCart(), authentication);
     }
 }
 
