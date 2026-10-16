@@ -71,9 +71,9 @@ public class ProductService {
         product.setPrice(price);
         product.setActive(isActive);
 
-        String imageUrl = saveImage(image);
-
-        product.setImage(imageUrl);
+        if (image != null && !image.isEmpty()) {
+            product.setImage(saveImage(image));
+        }
 
         return product;
     }

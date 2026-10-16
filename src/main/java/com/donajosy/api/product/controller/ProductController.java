@@ -46,6 +46,11 @@ public class ProductController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public Product save(@Valid @ModelAttribute CreateProductRequest request) throws IOException {
+        if (request.image() == null || request.image().isEmpty()) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Product image is required"
+            );
+        }
         Product product = productService.insertProduct(
                 new Product(),
                 request.name(),

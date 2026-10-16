@@ -16,7 +16,7 @@ public record CreateProductRequest(
         @JsonProperty("category")
         @NotNull ProductCategory category,
         @JsonProperty("image")
-        @NotNull MultipartFile image,
+        MultipartFile image,
         @JsonProperty("price")
         @NotNull BigDecimal price,
         @JsonProperty("isActive")
