@@ -77,11 +77,13 @@ public class AuthController {
 
     @PutMapping("/user/{id}")
     public ResponseEntity<UserResponse> updateUser(
-            @PathVariable UUID id, @RequestBody UserRequest request
+            @PathVariable UUID id,
+            @RequestBody UserRequest request,
+            Authentication authentication
     ) {
 
         UserResponse response =
-                authService.update(id, request);
+                authService.update(id, request, authentication);
 
         return ResponseEntity
                 .status(HttpStatus.OK)

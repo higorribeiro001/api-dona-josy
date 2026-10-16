@@ -13,6 +13,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import com.donajosy.api.product.entity.ProductCategory;
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.math.BigDecimal;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -53,9 +57,32 @@ public class CartService {
             category = null;
         }
         String query = name == null || name.isBlank() ? null : name.trim();
+        final UUID filteredUserId = userId;
+        final String nameQuery = query;
+        final ProductCategory categoryFilter = category;
+        final StatusCart statusFilter = statusCart;
         Pageable oldestFirst = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
                 Sort.by(Sort.Direction.ASC, "createdAt").and(Sort.by(Sort.Direction.ASC, "id")));
-        return cartRepository.search(userId, query, category, statusCart, oldestFirst);
+        Specification<Cart> specification = (root, criteriaQuery, criteriaBuilder) -> {
+            Join<Cart, Product> product = root.join("product");
+            var predicates = new ArrayList<Predicate>();
+            if (filteredUserId != null) {
+                predicates.add(criteriaBuilder.equal(root.get("user").get("id"), filteredUserId));
+            }
+            if (nameQuery != null) {
+                predicates.add(criteriaBuilder.like(
+                        criteriaBuilder.lower(product.get("name")),
+                        "%" + nameQuery.toLowerCase() + "%"));
+            }
+            if (categoryFilter != null) {
+                predicates.add(criteriaBuilder.equal(product.get("category"), categoryFilter));
+            }
+            if (statusFilter != null) {
+                predicates.add(criteriaBuilder.equal(root.get("statusCart"), statusFilter));
+            }
+            return criteriaBuilder.and(predicates.toArray(Predicate[]::new));
+        };
+        return cartRepository.findAll(specification, oldestFirst);
     }
 
     public BigDecimal totalForUser(StatusCart statusCart, Authentication authentication) {

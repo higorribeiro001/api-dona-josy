@@ -11,6 +11,10 @@ import com.donajosy.api.token.repository.RevokedTokenRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -118,8 +122,18 @@ public class AuthService {
         );
     }
 
-    public UserResponse update(UUID id, UserRequest request) {
+    public UserResponse update(UUID id, UserRequest request, Authentication authentication) {
         User user = userRepository.getReferenceById(id);
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+        boolean isOwnProfile = user.getEmail().equalsIgnoreCase(authentication.getName());
+        if (!isAdmin && !isOwnProfile) {
+            throw new AccessDeniedException("You can only update your own profile");
+        }
+        if (!user.getEmail().equalsIgnoreCase(request.email())
+                && userRepository.existsByEmailIgnoreCaseAndIdNot(request.email(), id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already registered");
+        }
 
         user.setName(request.name());
 
