@@ -1,11 +1,9 @@
 package com.donajosy.api.cart.controller;
 
-import com.donajosy.api.auth.entity.User;
 import com.donajosy.api.cart.entity.Cart;
 import com.donajosy.api.cart.dto.CreateCartRequest;
 import com.donajosy.api.cart.entity.StatusCart;
 import com.donajosy.api.cart.service.CartService;
-import com.donajosy.api.product.entity.Product;
 import com.donajosy.api.product.entity.ProductCategory;
 import java.math.BigDecimal;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.io.IOException;
 import java.util.UUID;
